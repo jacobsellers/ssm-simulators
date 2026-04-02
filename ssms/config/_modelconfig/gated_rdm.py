@@ -3,6 +3,7 @@
 # from ssms.basic_simulators.gated_rdm import gated_rdm_simulator, gated_rdm_stimcode_simulator
 
 import cssm
+from ssms.basic_simulators import boundary_functions as bf
 
 
 def get_gated_rdm_config():
@@ -14,6 +15,8 @@ def get_gated_rdm_config():
             [0.1, 0.1, 0.1, 0.5, 0.0, 0.0, -1, 0.1, 0.1],  # Lower bounds
             [8.0, 8.0, 5.0, 5.0, 3.0, 0.9, 1, 5.0, 1.5],  # Upper bounds
         ],
+        "boundary_name": "constant",
+        "boundary": bf.constant,
         "n_params": 9,
         "default_params": [5.0, 2.0, 0.3, 1.5, 1.5, 0.2, 0, 1.0, 0.3],
         "nchoices": 4,  # Single-choice model
