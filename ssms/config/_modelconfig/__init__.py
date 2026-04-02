@@ -132,6 +132,7 @@ from .shrink import (
     get_shrink_spot_simple_config,
     get_shrink_spot_simple_extended_config,
 )
+from .gated_rdm import get_gated_rdm_config
 from .validation import get_invalid_configs
 
 
@@ -159,8 +160,7 @@ def _normalize_param_bounds(config: dict) -> dict:
         # Convert list format to dict: [[low1, low2, ...], [high1, high2, ...]]
         bounds_lower, bounds_upper = config["param_bounds"]
         config["param_bounds_dict"] = {
-            param: (lower, upper)
-            for param, lower, upper in zip(config["params"], bounds_lower, bounds_upper)
+            param: (lower, upper) for param, lower, upper in zip(config["params"], bounds_lower, bounds_upper)
         }
     elif isinstance(config["param_bounds"], dict):
         # Already dict format, just copy
@@ -291,6 +291,7 @@ def get_model_config():
         "weibull_cdf": get_weibull_config(),
         "full_ddm2": get_full_ddm_config(),
         "ddm_legacy": get_ddm_legacy_config(),
+        "gated_rdm": get_gated_rdm_config(),
     }
 
     # Normalize all configs to include param_bounds_dict
@@ -337,6 +338,7 @@ __all__ = [
     "get_ddm_mic2_multinoise_angle_no_bias_config",
     "get_ddm_mic2_multinoise_weibull_no_bias_config",
     "get_poisson_race_config",
+    "get_gated_rdm_config",
 ]
 
 # Validate
@@ -352,9 +354,7 @@ def _validate_configs():
         "drift_configs": drift_config,
         "boundary_configs": boundary_config,
     }
-    invalid_configs = {
-        key: get_invalid_configs(configs) for key, configs in _ALL_CONFIGS.items()
-    }
+    invalid_configs = {key: get_invalid_configs(configs) for key, configs in _ALL_CONFIGS.items()}
     if any(invalid_configs.values()):
         raise ValueError(f"Invalid parameter names detected: {invalid_configs}")
 

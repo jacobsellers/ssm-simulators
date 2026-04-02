@@ -30,6 +30,7 @@ import numpy
 CYTHON_MODULES = [
     "_utils",
     "lba_models",
+    "gated_race_models",
 ]
 
 # Modules that benefit from OpenMP (will still build without it, but with OpenMP flags)
@@ -84,18 +85,10 @@ def gsl_available():
     # Try to get GSL configuration
     try:
         gsl_cflags = (
-            subprocess.check_output(
-                ["gsl-config", "--cflags"], text=True, stderr=subprocess.DEVNULL
-            )
-            .strip()
-            .split()
+            subprocess.check_output(["gsl-config", "--cflags"], text=True, stderr=subprocess.DEVNULL).strip().split()
         )
         gsl_libs = (
-            subprocess.check_output(
-                ["gsl-config", "--libs"], text=True, stderr=subprocess.DEVNULL
-            )
-            .strip()
-            .split()
+            subprocess.check_output(["gsl-config", "--libs"], text=True, stderr=subprocess.DEVNULL).strip().split()
         )
 
         _GSL_FLAGS = {
@@ -217,9 +210,7 @@ def openmp_available():
             except (subprocess.CalledProcessError, FileNotFoundError):
                 # Homebrew not available or libomp not installed
                 _OPENMP_AVAILABLE = False
-                print(
-                    "OpenMP not available (libomp not found, install with: brew install libomp)"
-                )
+                print("OpenMP not available (libomp not found, install with: brew install libomp)")
                 return False
         elif sys.platform == "win32":
             compile_cmd = ["cl", "/openmp", src_file, f"/Fe{out_file}"]
@@ -228,9 +219,7 @@ def openmp_available():
             compile_cmd = ["gcc", "-fopenmp", src_file, "-o", out_file]
 
         try:
-            subprocess.check_call(
-                compile_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
+            subprocess.check_call(compile_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             _OPENMP_AVAILABLE = True
             print("OpenMP available: parallel support enabled")
         except (subprocess.CalledProcessError, FileNotFoundError):
@@ -388,9 +377,7 @@ try:
 
     # GSL-only modules: only compiled when GSL is present.
     # _c_rng.pyx includes gsl_rng.h unconditionally; without GSL the #error fires.
-    gsl_extensions = (
-        create_extensions(GSL_MODULES, openmp=True, gsl=True) if HAS_GSL else []
-    )
+    gsl_extensions = create_extensions(GSL_MODULES, openmp=True, gsl=True) if HAS_GSL else []
 
     ext_modules = cythonize(
         standard_extensions + openmp_extensions + gsl_extensions,
@@ -404,12 +391,8 @@ try:
     print("SSMS Build Configuration")
     print(f"{'=' * 60}")
     print(f"  Platform:     {sys.platform}")
-    print(
-        f"  OpenMP:       {'enabled' if HAS_OPENMP else 'disabled (parallel features unavailable)'}"
-    )
-    print(
-        f"  GSL:          {'enabled' if HAS_GSL else 'disabled (parallel RNG falls back to NumPy)'}"
-    )
+    print(f"  OpenMP:       {'enabled' if HAS_OPENMP else 'disabled (parallel features unavailable)'}")
+    print(f"  GSL:          {'enabled' if HAS_GSL else 'disabled (parallel RNG falls back to NumPy)'}")
     print(
         f"  Modules:      {len(CYTHON_MODULES)} standard + {len(OPENMP_MODULES)} parallel"
         + (f" + {n_gsl} gsl" if HAS_GSL else "")

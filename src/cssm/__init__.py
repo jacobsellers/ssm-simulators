@@ -24,6 +24,9 @@ from .ddm_models import (
 )
 
 from .race_models import race_model, lca, racing_diffusion_model
+
+from .gated_race_models import gated_racing_diffusion_model, gated_racing_diffusion_model_stimcode
+
 from .poisson_race_models import poisson_race
 from .lba_models import lba_vanilla, lba_angle, rlwm_lba_pw_v1, rlwm_lba_race
 
@@ -56,6 +59,9 @@ __all__ = [
     "race_model",
     "lca",
     "racing_diffusion_model",
+    # Gated race models
+    "gated_racing_diffusion_model",
+    "gated_racing_diffusion_model_stimcode",
     # Poisson race models
     "poisson_race",
     # LBA models
