@@ -19,6 +19,7 @@ def gated_rdm_simulator(
     x0resp01,  # starting point for motor accumulator 0 and 1 (task 0)
     x0resp23,  # starting point for motor accumulator 2 and 3 (task 1)
     kgate,  # task gate
+    toffset,  # task accumulator onset offset relative to response onset
     t,  # non decision time
     # s,  # decision noise
     delta_t=0.001,
@@ -73,12 +74,21 @@ def gated_rdm_simulator(
         winner = -1
         winner_found = 0
 
-        x_task_t = x_task_init[k, :]
+        x_task_t = x_task_init[k, :].copy()
         x_motor_t = np.array([x0resp01[k], x0resp01[k], x0resp23[k], x0resp23[k]])
+
+        task_pre_time = 0.0
+        while task_pre_time < toffset[k] and task_pre_time < max_t:
+            x_task_t += v_task_arr[k, :] * delta_t + sqrt_st * rng.standard_normal(2)
+            task_pre_time += delta_t
+
+        task_start_time = max(0.0, -toffset[k])
 
         # Race simulation (first-past-the-post, no reflecting boundary)
         while not winner_found and t_particle <= max_t:
-            x_task_t += v_task_arr[k, :] * delta_t + sqrt_st * rng.standard_normal(2)
+            if t_particle >= task_start_time:
+                x_task_t += v_task_arr[k, :] * delta_t + sqrt_st * rng.standard_normal(2)
+
             w0 = logistic(kgate[k] * (x_task_t[0] - x_task_t[1]))
             w1 = 1 - w0
 
@@ -109,7 +119,19 @@ def gated_rdm_simulator(
     if return_option == "full":
         metadata = {
             "model": "gated_rdm",
-            "params": ["vtask", "vsig", "vcom", "a", "x0task0", "x0task1", "x0resp01", "x0resp23", "kgate", "t"],
+            "params": [
+                "vtask",
+                "vsig",
+                "vcom",
+                "a",
+                "x0task0",
+                "x0task1",
+                "x0resp01",
+                "x0resp23",
+                "kgate",
+                "toffset",
+                "t",
+            ],
             "param_values": {
                 "vtask": vtask,
                 "vsig": vsig,
@@ -120,6 +142,7 @@ def gated_rdm_simulator(
                 "x0resp01": x0resp01,
                 "x0resp23": x0resp23,
                 "kgate": kgate,
+                "toffset": toffset,
                 "t": t,
             },
             "n_samples": n_samples,
@@ -149,6 +172,7 @@ def gated_rdm_stimcode_simulator(
     trialtypecode,  # 1 if repeat, -1 if switch, 0 if first trial
     kgate,  # task gate
     zresp,
+    toffset,  # task accumulator onset offset relative to response onset
     t,  # non decision time
     delta_t=0.001,
     max_t=20.0,
@@ -167,7 +191,9 @@ def gated_rdm_stimcode_simulator(
       4  ztask
       5  trialtypecode   (-1 switch, 0 first/neither, +1 repeat)
       6  kgate
-      7  t
+      7  zresp
+      8  toffset
+      9  t
     """
 
     valid = np.isin(trialtypecode, [-1, 0, 1])
@@ -191,6 +217,7 @@ def gated_rdm_stimcode_simulator(
         x0resp01=x0resp01.astype(np.float32),
         x0resp23=x0resp23.astype(np.float32),
         kgate=kgate,
+        toffset=toffset,
         t=t,
         delta_t=delta_t,
         max_t=max_t,

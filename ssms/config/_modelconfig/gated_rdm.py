@@ -10,15 +10,26 @@ def get_gated_rdm_config():
     """Get configuration for Gated RDM model."""
     return {
         "name": "gated_rdm",
-        "params": ["vtask", "vsig", "vcom", "a", "ztask", "zresp", "trialtypecode", "kgate", "t"],
+        "params": [
+            "vtask",
+            "vsig",
+            "vcom",
+            "a",
+            "ztask",
+            "zresp",
+            "trialtypecode",
+            "kgate",
+            "toffset",
+            "t",
+        ],
         "param_bounds": [
-            [0.1, 0.1, 0.1, 0.5, 0.0, 0.0, -1, 0.1, 0.1],  # Lower bounds
-            [8.0, 8.0, 5.0, 5.0, 3.0, 0.9, 1, 5.0, 1.5],  # Upper bounds
+            [0.0, 0.0, 0.0, 0.5, 0.0, 0.0, -1, 0.1, -1.0, 0.1],  # Lower bounds
+            [15.0, 15.0, 15.0, 7.0, 10.0, 0.9, 1, 10.0, 1.0, 1.5],  # Upper bounds
         ],
         "boundary_name": "constant",
         "boundary": bf.constant,
-        "n_params": 9,
-        "default_params": [5.0, 2.0, 0.3, 1.5, 1.5, 0.2, 0, 1.0, 0.3],
+        "n_params": 10,
+        "default_params": [7.0, 4.0, 0.0, 1.5, 1.5, 0.2, 0, 1.0, 0.0, 0.3],
         "nchoices": 4,  # Single-choice model
         "choices": [0, 1, 2, 3],
         "n_particles": 1,
