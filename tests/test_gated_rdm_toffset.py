@@ -44,3 +44,23 @@ def test_gated_rdm_toffset_smoke():
         assert out["rts"].shape == (5, 1, 1)
         assert out["choices"].shape == (5, 1, 1)
         assert out["metadata"]["toffset"][0] == np.float32(toffset)
+
+
+def test_gated_rdm_rt_counts_crossing_step():
+    params = _stimcode_params(0.0)
+    params["vsig"] = np.array([1000.0], dtype=np.float32)
+    params["vcom"] = np.array([1000.0], dtype=np.float32)
+    params["a"] = np.array([0.5], dtype=np.float32)
+    params["kgate"] = np.array([0.0], dtype=np.float32)
+
+    out = cssm.gated_racing_diffusion_model_stimcode(
+        **params,
+        n_samples=3,
+        n_trials=1,
+        delta_t=0.01,
+        max_t=1.0,
+        random_state=123,
+        return_option="full",
+    )
+
+    np.testing.assert_allclose(out["rts"], np.full((3, 1, 1), 0.31), rtol=1e-6)

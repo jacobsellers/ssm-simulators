@@ -96,6 +96,9 @@ def gated_rdm_simulator(
                 w0 * v_mot_task1[k, :] * delta_t + w1 * v_mot_task2[k, :] * delta_t + sqrt_st * rng.standard_normal(4)
             )
 
+            t_particle += delta_t
+            ix += 1
+
             if np.any(x_motor_t >= a[k]):
                 winner = np.where(x_motor_t >= a[k])[0][0]
                 winner_found = 1
@@ -103,9 +106,6 @@ def gated_rdm_simulator(
 
             if winner_found:
                 break
-
-            t_particle += delta_t
-            ix += 1
 
             if t_particle >= max_t:
                 break

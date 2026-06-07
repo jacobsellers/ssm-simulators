@@ -192,6 +192,9 @@ def gated_racing_diffusion_model(
                     particles_view[5] += (vcom_view[k] * wtask_view[1] * delta_t) + sqrt_st * gaussian_values[m+3]
                     m += 4
 
+                t_particle += delta_t
+                ix += 1
+
                 # check for winner
                 for j in range(2, 6):
                     if particles_view[j] >= a_view[k]:
@@ -201,9 +204,6 @@ def gated_racing_diffusion_model(
                 
                 if winner_found:
                     break
-
-                t_particle += delta_t
-                ix += 1
 
             # Store RT and choice
             rts_view[n, k, 0] = t_particle + t[k]
