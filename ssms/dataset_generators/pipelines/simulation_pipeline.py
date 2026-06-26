@@ -243,7 +243,10 @@ class SimulationPipeline:
             # Apply all filters
             # AF-TODO: Apply .get() pattern here to default to "no filter" on the
             # key if it isn't present.
-            filters = self.generator_config.get("simulator", {}).get("filters", {})
+            filters = self.generator_config.get("pipeline", {}).get(
+                "simulation_filters",
+                self.generator_config.get("simulator", {}).get("filters", {}),
+            )
             keep = (
                 keep
                 & (mode_ <= filters.get("mode", float("inf")))

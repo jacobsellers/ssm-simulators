@@ -1,6 +1,7 @@
 import inspect
 
 import numpy as np
+import pytest
 
 import cssm
 
@@ -30,7 +31,7 @@ def test_gated_rdm_stimcode_accepts_toffset():
 
 
 def test_gated_rdm_toffset_smoke():
-    for toffset in [0.0, 0.05, -0.05]:
+    for toffset in [0.0, 0.05]:
         out = cssm.gated_racing_diffusion_model_stimcode(
             **_stimcode_params(toffset),
             n_samples=5,
@@ -44,6 +45,19 @@ def test_gated_rdm_toffset_smoke():
         assert out["rts"].shape == (5, 1, 1)
         assert out["choices"].shape == (5, 1, 1)
         assert out["metadata"]["toffset"][0] == np.float32(toffset)
+
+
+def test_gated_rdm_toffset_rejects_negative_values():
+    with pytest.raises(ValueError, match="toffset must be nonnegative"):
+        cssm.gated_racing_diffusion_model_stimcode(
+            **_stimcode_params(-0.05),
+            n_samples=1,
+            n_trials=1,
+            delta_t=0.01,
+            max_t=1.0,
+            random_state=123,
+            return_option="minimal",
+        )
 
 
 def test_gated_rdm_rt_counts_crossing_step():

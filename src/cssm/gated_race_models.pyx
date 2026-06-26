@@ -111,12 +111,11 @@ def gated_racing_diffusion_model(
     cdef float[:, :] traj_view = traj
 
     # Initialize variables needed for for loop
-    cdef float t_particle, task_pre_time, task_start_time, smooth_u # , deadline_tmp
+    cdef float t_particle, task_pre_time, smooth_u # , deadline_tmp
     cdef Py_ssize_t n, ix, j, k
     cdef Py_ssize_t m = 0
     cdef int winner = -1
     cdef int winner_found = 0
-    cdef int task_active = 0
 
     cdef int num_steps = int((max_t / delta_t) + 1)
     cdef int num_draws = num_steps * n_particles
@@ -127,6 +126,11 @@ def gated_racing_diffusion_model(
     for k in range(n_trials):
 
         #deadline_tmp = compute_deadline_tmp(max_t, deadline_view[k], t_view[k])
+        if toffset_view[k] < 0.0:
+            raise ValueError(
+                "toffset must be nonnegative; task accumulators can only start "
+                "before response accumulators"
+            )
 
         # Loop over samples
         for n in range(n_samples):
@@ -157,40 +161,23 @@ def gated_racing_diffusion_model(
                 m += 2
                 task_pre_time += delta_t
 
-            task_start_time = 0.0
-            if toffset_view[k] < 0.0:
-                task_start_time = -toffset_view[k]
-
             while not winner_found and t_particle <= max_t:
 
-                task_active = t_particle >= task_start_time
-                if task_active:
-                    if m + 6 > num_draws:
-                        m = 0
-                        gaussian_values = draw_gaussian(num_draws)
+                if m + 6 > num_draws:
+                    m = 0
+                    gaussian_values = draw_gaussian(num_draws)
 
-                    particles_view[0] += (vtask_view[k] * delta_t) + sqrt_st * gaussian_values[m]
-                    particles_view[1] += sqrt_st * gaussian_values[m+1]
-                else:
-                    if m + 4 > num_draws:
-                        m = 0
-                        gaussian_values = draw_gaussian(num_draws)
+                particles_view[0] += (vtask_view[k] * delta_t) + sqrt_st * gaussian_values[m]
+                particles_view[1] += sqrt_st * gaussian_values[m+1]
 
                 wtask_view[0] = 1 / (1 + exp(-kgate_view[k] * (particles_view[0] - particles_view[1])))
                 wtask_view[1] = 1 - wtask_view[0]
 
-                if task_active:
-                    particles_view[2] += (vsig_view[k] * wtask_view[0] * delta_t) + sqrt_st * gaussian_values[m+2]
-                    particles_view[3] += (vcom_view[k] * wtask_view[0] * delta_t) + sqrt_st * gaussian_values[m+3]
-                    particles_view[4] += (vsig_view[k] * wtask_view[1] * delta_t) + sqrt_st * gaussian_values[m+4]
-                    particles_view[5] += (vcom_view[k] * wtask_view[1] * delta_t) + sqrt_st * gaussian_values[m+5]
-                    m += 6
-                else:
-                    particles_view[2] += (vsig_view[k] * wtask_view[0] * delta_t) + sqrt_st * gaussian_values[m]
-                    particles_view[3] += (vcom_view[k] * wtask_view[0] * delta_t) + sqrt_st * gaussian_values[m+1]
-                    particles_view[4] += (vsig_view[k] * wtask_view[1] * delta_t) + sqrt_st * gaussian_values[m+2]
-                    particles_view[5] += (vcom_view[k] * wtask_view[1] * delta_t) + sqrt_st * gaussian_values[m+3]
-                    m += 4
+                particles_view[2] += (vsig_view[k] * wtask_view[0] * delta_t) + sqrt_st * gaussian_values[m+2]
+                particles_view[3] += (vcom_view[k] * wtask_view[0] * delta_t) + sqrt_st * gaussian_values[m+3]
+                particles_view[4] += (vsig_view[k] * wtask_view[1] * delta_t) + sqrt_st * gaussian_values[m+4]
+                particles_view[5] += (vcom_view[k] * wtask_view[1] * delta_t) + sqrt_st * gaussian_values[m+5]
+                m += 6
 
                 t_particle += delta_t
                 ix += 1

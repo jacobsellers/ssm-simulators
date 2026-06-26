@@ -19,7 +19,7 @@ def gated_rdm_simulator(
     x0resp01,  # starting point for motor accumulator 0 and 1 (task 0)
     x0resp23,  # starting point for motor accumulator 2 and 3 (task 1)
     kgate,  # task gate
-    toffset,  # task accumulator onset offset relative to response onset
+    toffset,  # nonnegative task accumulator onset offset before response onset
     t,  # non decision time
     # s,  # decision noise
     delta_t=0.001,
@@ -66,6 +66,12 @@ def gated_rdm_simulator(
         k = flat_idx // n_samples  # trial index
         n = flat_idx % n_samples  # sample index
 
+        if toffset[k] < 0.0:
+            raise ValueError(
+                "toffset must be nonnegative; task accumulators can only start "
+                "before response accumulators"
+            )
+
         if flat_idx % 1000 == 0:
             print(f"Simulating sample {n} of trial {k} (flat index {flat_idx})")
 
@@ -82,12 +88,9 @@ def gated_rdm_simulator(
             x_task_t += v_task_arr[k, :] * delta_t + sqrt_st * rng.standard_normal(2)
             task_pre_time += delta_t
 
-        task_start_time = max(0.0, -toffset[k])
-
         # Race simulation (first-past-the-post, no reflecting boundary)
         while not winner_found and t_particle <= max_t:
-            if t_particle >= task_start_time:
-                x_task_t += v_task_arr[k, :] * delta_t + sqrt_st * rng.standard_normal(2)
+            x_task_t += v_task_arr[k, :] * delta_t + sqrt_st * rng.standard_normal(2)
 
             w0 = logistic(kgate[k] * (x_task_t[0] - x_task_t[1]))
             w1 = 1 - w0
@@ -172,7 +175,7 @@ def gated_rdm_stimcode_simulator(
     trialtypecode,  # 1 if repeat, -1 if switch, 0 if first trial
     kgate,  # task gate
     zresp,
-    toffset,  # task accumulator onset offset relative to response onset
+    toffset,  # nonnegative task accumulator onset offset before response onset
     t,  # non decision time
     delta_t=0.001,
     max_t=20.0,
